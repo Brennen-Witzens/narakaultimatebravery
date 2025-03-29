@@ -1,7 +1,7 @@
 use crate::{Context, Error};
 use rand::{
     distr::{Distribution, StandardUniform},
-    Rng,
+    random, Rng,
 };
 
 /// Show this help menu
@@ -21,79 +21,6 @@ pub async fn help(
         },
     )
     .await?;
-    Ok(())
-}
-
-/// Vote for something
-///
-/// Enter `~vote pumpkin` to vote for pumpkins
-#[poise::command(prefix_command, slash_command)]
-pub async fn vote(
-    ctx: Context<'_>,
-    #[description = "What to vote for"] choice: String,
-) -> Result<(), Error> {
-    // Lock the Mutex in a block {} so the Mutex isn't locked across an await point
-    let num_votes = {
-        let mut hash_map = ctx.data().votes.lock().unwrap();
-        let num_votes = hash_map.entry(choice.clone()).or_default();
-        *num_votes += 1;
-        *num_votes
-    };
-
-    let response = format!("Successfully voted for {choice}. {choice} now has {num_votes} votes!");
-    ctx.say(response).await?;
-    Ok(())
-}
-
-/// Retrieve number of votes
-///
-/// Retrieve the number of votes either in general, or for a specific choice:
-/// ```
-/// ~getvotes
-/// ~getvotes pumpkin
-/// ```
-#[poise::command(prefix_command, track_edits, aliases("votes"), slash_command)]
-pub async fn getvotes(
-    ctx: Context<'_>,
-    #[description = "Choice to retrieve votes for"] choice: Option<String>,
-) -> Result<(), Error> {
-    if let Some(choice) = choice {
-        let num_votes = *ctx.data().votes.lock().unwrap().get(&choice).unwrap_or(&0);
-        let response = match num_votes {
-            0 => format!("Nobody has voted for {} yet", choice),
-            _ => format!("{} people have voted for {}", num_votes, choice),
-        };
-        ctx.say(response).await?;
-    } else {
-        let mut response = String::new();
-        for (choice, num_votes) in ctx.data().votes.lock().unwrap().iter() {
-            response += &format!("{}: {} votes", choice, num_votes);
-        }
-
-        if response.is_empty() {
-            response += "Nobody has voted for anything yet :(";
-        }
-
-        ctx.say(response).await?;
-    };
-
-    Ok(())
-}
-
-/// Pick a random number
-///
-/// ~randomNum
-#[poise::command(prefix_command)]
-pub async fn getRandomNum(
-    ctx: Context<'_>,
-    #[description = "Add a value to the random number"] value_to_add: Option<i32>,
-) -> Result<(), Error> {
-    if let Some(val) = value_to_add {
-        let ran = val + 5;
-        ctx.say(ran.to_string()).await?;
-    } else {
-        ctx.say("5").await?;
-    }
     Ok(())
 }
 
@@ -163,6 +90,7 @@ impl Distribution<Character> for StandardUniform {
     }
 }
 
+#[derive(Debug)]
 enum MeleeWeapon {
     Longsword,
     Katana,
@@ -179,6 +107,27 @@ enum MeleeWeapon {
     FistBlades,
 }
 
+impl Distribution<MeleeWeapon> for StandardUniform {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> MeleeWeapon {
+        match rng.random_range(0..=13) {
+            0 => MeleeWeapon::Longsword,
+            1 => MeleeWeapon::Katana,
+            2 => MeleeWeapon::HengSword,
+            3 => MeleeWeapon::GreatSword,
+            4 => MeleeWeapon::PoleSword,
+            5 => MeleeWeapon::Spear,
+            6 => MeleeWeapon::Staff,
+            7 => MeleeWeapon::DualBlades,
+            8 => MeleeWeapon::DualHalberds,
+            9 => MeleeWeapon::Dagger,
+            10 => MeleeWeapon::Fan,
+            11 => MeleeWeapon::Nunchucks,
+            _ => MeleeWeapon::FistBlades,
+        }
+    }
+}
+
+#[derive(Debug)]
 enum RangeWeapon {
     Bow,
     Cannon,
@@ -187,19 +136,54 @@ enum RangeWeapon {
     RepeatingCrossbow,
 }
 
+impl Distribution<RangeWeapon> for StandardUniform {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> RangeWeapon {
+        match rng.random_range(0..=4) {
+            0 => RangeWeapon::Bow,
+            1 => RangeWeapon::Cannon,
+            2 => RangeWeapon::Musket,
+            3 => RangeWeapon::Pistol,
+            _ => RangeWeapon::RepeatingCrossbow,
+        }
+    }
+}
+
+#[derive(Debug)]
 enum Skill {
     F1,
     F2,
     F3,
 }
 
+impl Distribution<Skill> for StandardUniform {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Skill {
+        match rng.random_range(0..=3) {
+            0 => Skill::F1,
+            1 => Skill::F2,
+            _ => Skill::F3,
+        }
+    }
+}
+
+#[derive(Debug)]
 enum Ultimate {
     V1,
     V2,
     V3,
 }
 
+impl Distribution<Ultimate> for StandardUniform {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Ultimate {
+        match rng.random_range(0..=3) {
+            0 => Ultimate::V1,
+            1 => Ultimate::V2,
+            _ => Ultimate::V3,
+        }
+    }
+}
+
 // TODO: Setup the skill and ultimate as enums as well
+#[derive(Debug)]
 struct CharacterSet {
     character: Character,
     skill: Skill,
@@ -209,27 +193,21 @@ struct CharacterSet {
 }
 
 /// Ultimate Bravery for Naraka
-/// Define between Customs, solos, duos and trios
-/// Trios can have actual comps if flagged
-/// Everything else is randomized
-/// Character, skill, ultimate and weapons to prioritize
-/// !ultimatebravery
-#[poise::command(prefix_command)]
+/// /ultimatebravery
+#[poise::command(slash_command)]
 pub async fn ultimatebravery(
     ctx: Context<'_>,
-    // TODO: Mode is required
-    // TODO: Figure out serious flag
-    // Serious flag is just a string that is there for if someone wants an actual
-    // build or comp, value of what they put in doesn't matter. We just want to know
-    // they want a serious value returned
-    #[description = "Which mode to choose from"] mode: String,
-    #[description = "If trios wants to be a serious comp"] serious: Option<String>,
+    #[description = "Which mode to choose from"]
+    #[choices("Customs", "Solos", "Duos", "Trios")]
+    mode: &'static str,
+    #[description = "If trios wants to be a serious comp"] _serious: Option<bool>,
 ) -> Result<(), Error> {
-    let game_mode = get_game_mode(&mode)?;
+    let game_mode = get_game_mode(&mode.to_lowercase())?;
     match game_mode {
         GameMode::Customs => {
-            let character: Character = rand::random();
-            println!("Character is {:?}", character);
+            let response = create_character_set().await;
+            let format = format!("The character set is: {:?}", response);
+            ctx.say(format).await?;
         }
         GameMode::Solos => todo!(),
         GameMode::Duos => todo!(),
@@ -244,13 +222,6 @@ pub async fn ultimatebravery(
             //        ctx.say("Some crazy comp".to_string()).await?
             //    }
             //}
-            if serious.is_some() {
-                // Do serious comp randomization here
-                ctx.say("Sand Siphon".to_string()).await?;
-            } else {
-                // Do ultimate bravery randomization here
-                ctx.say("Some crazy comp".to_string()).await?;
-            }
         }
     }
 
@@ -264,5 +235,20 @@ fn get_game_mode(game_mode: &str) -> Result<GameMode, Error> {
         "duos" => return Ok(GameMode::Duos),
         "trios" => return Ok(GameMode::Trios),
         _ => return Err("Not a valid game mode".into()),
+    }
+}
+
+async fn create_character_set() -> CharacterSet {
+    let character: Character = rand::random();
+    let skill: Skill = rand::random();
+    let ultimate: Ultimate = rand::random();
+    let melee_weapon: MeleeWeapon = rand::random();
+    let range_weapon: RangeWeapon = rand::random();
+    CharacterSet {
+        character,
+        skill,
+        ultimate,
+        melee_weapon,
+        range_weapon,
     }
 }
