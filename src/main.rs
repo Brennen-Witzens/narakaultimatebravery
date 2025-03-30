@@ -1,41 +1,14 @@
 use std::env;
 
 mod commands;
-use poise::{framework, serenity_prelude as poise_serenity};
-//use serenity::async_trait;
-//use serenity::model::channel::Message;
-//use serenity::model::gateway::Ready;
-//use serenity::prelude::*;
-use std::{collections::HashMap, sync::Mutex};
+mod util;
+use poise::serenity_prelude as poise_serenity;
 
 //struct Data {} // User data, which is stored and accessible in all command invocations
 // Custom user data passed to all command functions
 pub struct Data {}
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
-
-struct Handler;
-
-//#[async_trait]
-//impl EventHandler for Handler {
-// Set a handler for the 'message' event - so that whenever a message is recieved
-// the closure (or function) passed will be called.
-
-// Event handlers are dispatched through a threadpool and so multiple events can be
-// dispatched simulaneously
-//
-//    async fn message(&self, ctx: Context, msg: Message) {
-//        if msg.content == "!ping" {
-//            if let Err(why) = msg.channel_id.say(&ctx.http, "Pong!").await {
-//                println!("Error sending message: {why:?}");
-//            }
-//        }
-//    }
-//
-//    async fn ready(&self, _: Context, ready: Ready) {
-//        println!("{} is connected!", ready.user.name);
-//    }
-//}
 
 #[poise::command(slash_command, prefix_command)]
 async fn age(
@@ -91,18 +64,3 @@ async fn main() {
         .await;
     client.unwrap().start().await.unwrap();
 }
-
-//let intents = GatewayIntents::GUILD_MESSAGES
-//    | GatewayIntents::DIRECT_MESSAGES
-//    | GatewayIntents::MESSAGE_CONTENT;
-
-//let mut client = Client::builder(token, intents)
-//    .event_handler(Handler)
-//    .await
-//    .expect("Error creating client");
-
-//// Start listening for events by starting a single shard
-//if let Err(why) = client.start().await {
-//    println!("An error occurred while running the client: {:?}", why);
-//}
-//}
