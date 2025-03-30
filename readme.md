@@ -4,4 +4,5 @@ TODO:
     - Database?
     - JSON?
     - Easier way to read the data into the program
-- Work on getting the full result printed
+- Work on more of the mode returns
+- Clean up display for the returns

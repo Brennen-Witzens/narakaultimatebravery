@@ -1,7 +1,9 @@
+use core::fmt;
+
 use crate::{Context, Error};
 use rand::{
     distr::{Distribution, StandardUniform},
-    random, Rng,
+    Rng,
 };
 
 /// Show this help menu
@@ -59,6 +61,37 @@ enum Character {
     Lannie,
 }
 
+impl fmt::Display for Character {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Character::Unspecified => write!(f, "Unspecified"),
+            Character::Viper => write!(f, "Viper"),
+            Character::Feria => write!(f, "Feria"),
+            Character::Tianhai => write!(f, "Tianhai"),
+            Character::Ziping => write!(f, "Ziping"),
+            Character::Temulch => write!(f, "Temulch"),
+            Character::Tarka => write!(f, "Tarka"),
+            Character::Kurumi => write!(f, "Kurumi"),
+            Character::Yoto => write!(f, "Yoto"),
+            Character::Valda => write!(f, "Valda"),
+            Character::Yueshan => write!(f, "Yueshan"),
+            Character::Wuchen => write!(f, "Wuchen"),
+            Character::Justina => write!(f, "Justina"),
+            Character::Takeda => write!(f, "Takeda"),
+            Character::Matari => write!(f, "Matari"),
+            Character::Akos => write!(f, "Akos"),
+            Character::Zai => write!(f, "Zai"),
+            Character::Tessa => write!(f, "Tessa"),
+            Character::Hadi => write!(f, "Hadi"),
+            Character::Shayol => write!(f, "Shayol"),
+            Character::Lyam => write!(f, "Lyam"),
+            Character::Kylin => write!(f, "Kylin"),
+            Character::Cyra => write!(f, "Cyra"),
+            Character::Lannie => write!(f, "Lannie"),
+        }
+    }
+}
+
 impl Distribution<Character> for StandardUniform {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Character {
         match rng.random_range(0..=22) {
@@ -90,6 +123,7 @@ impl Distribution<Character> for StandardUniform {
     }
 }
 
+// TODO: Serde these
 #[derive(Debug)]
 enum MeleeWeapon {
     Longsword,
@@ -105,6 +139,26 @@ enum MeleeWeapon {
     Fan,
     Nunchucks,
     FistBlades,
+}
+
+impl fmt::Display for MeleeWeapon {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MeleeWeapon::Longsword => write!(f, "Longsword"),
+            MeleeWeapon::Katana => write!(f, "Katana"),
+            MeleeWeapon::HengSword => write!(f, "Heng Sword"),
+            MeleeWeapon::GreatSword => write!(f, "Greatsword"),
+            MeleeWeapon::PoleSword => write!(f, "Polesword"),
+            MeleeWeapon::Spear => write!(f, "Spear"),
+            MeleeWeapon::Staff => write!(f, "Staff"),
+            MeleeWeapon::DualBlades => write!(f, "Dual Blades"),
+            MeleeWeapon::DualHalberds => write!(f, "Dual Halberds"),
+            MeleeWeapon::Dagger => write!(f, "Dagger"),
+            MeleeWeapon::Fan => write!(f, "Fan"),
+            MeleeWeapon::Nunchucks => write!(f, "Nunchucks"),
+            MeleeWeapon::FistBlades => write!(f, "Fistblades"),
+        }
+    }
 }
 
 impl Distribution<MeleeWeapon> for StandardUniform {
@@ -127,6 +181,7 @@ impl Distribution<MeleeWeapon> for StandardUniform {
     }
 }
 
+// TODO: Serde
 #[derive(Debug)]
 enum RangeWeapon {
     Bow,
@@ -134,6 +189,18 @@ enum RangeWeapon {
     Musket,
     Pistol,
     RepeatingCrossbow,
+}
+
+impl fmt::Display for RangeWeapon {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RangeWeapon::Bow => write!(f, "Bow"),
+            RangeWeapon::Cannon => write!(f, "Cannon"),
+            RangeWeapon::Musket => write!(f, "Musket"),
+            RangeWeapon::Pistol => write!(f, "Pistol"),
+            RangeWeapon::RepeatingCrossbow => write!(f, "Repeating Crossbow"),
+        }
+    }
 }
 
 impl Distribution<RangeWeapon> for StandardUniform {
@@ -155,6 +222,16 @@ enum Skill {
     F3,
 }
 
+impl fmt::Display for Skill {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Skill::F1 => write!(f, "F1"),
+            Skill::F2 => write!(f, "F2"),
+            Skill::F3 => write!(f, "F3"),
+        }
+    }
+}
+
 impl Distribution<Skill> for StandardUniform {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Skill {
         match rng.random_range(0..=3) {
@@ -170,6 +247,16 @@ enum Ultimate {
     V1,
     V2,
     V3,
+}
+
+impl fmt::Display for Ultimate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Ultimate::V1 => write!(f, "V1"),
+            Ultimate::V2 => write!(f, "V2"),
+            Ultimate::V3 => write!(f, "V3"),
+        }
+    }
 }
 
 impl Distribution<Ultimate> for StandardUniform {
@@ -188,7 +275,8 @@ struct CharacterSet {
     character: Character,
     skill: Skill,
     ultimate: Ultimate,
-    melee_weapon: MeleeWeapon,
+    main_weapon: MeleeWeapon,
+    sub_weapon: MeleeWeapon,
     range_weapon: RangeWeapon,
 }
 
@@ -202,39 +290,47 @@ pub async fn ultimatebravery(
     mode: &'static str,
     #[description = "If trios wants to be a serious comp"] _serious: Option<bool>,
 ) -> Result<(), Error> {
-    let game_mode = get_game_mode(&mode.to_lowercase())?;
+    let game_mode = get_game_mode(&mode.to_lowercase()).await?;
     match game_mode {
         GameMode::Customs => {
             let response = create_character_set().await;
-            let format = format!("The character set is: {:?}", response);
+            let format = format!(
+                "The set is - Character: {}, Skill: {}, Ultimate: {}, Main Melee Priority: {}, Sub Melee Priority: {}, Range: {}",
+                response.character,
+                response.skill,
+                response.ultimate,
+                response.main_weapon,
+                response.sub_weapon,
+                response.range_weapon,
+            );
             ctx.say(format).await?;
         }
         GameMode::Solos => todo!(),
         GameMode::Duos => todo!(),
-        GameMode::Trios => {
-            //match serious {
-            //    Some(_) => {
-            //        // Do serious comp randomization here
-            //        ctx.say("Sand Siphon".to_string()).await?
-            //    }
-            //    None => {
-            //        // Do ultimate bravery randomization here
-            //        ctx.say("Some crazy comp".to_string()).await?
-            //    }
-            //}
-        }
+        GameMode::Trios => todo!(), //{
+                                    //match serious {
+                                    //    Some(_) => {
+                                    //        // Do serious comp randomization here
+                                    //        ctx.say("Sand Siphon".to_string()).await?
+                                    //    }
+                                    //    None => {
+                                    //        // Do ultimate bravery randomization here
+                                    //        ctx.say("Some crazy comp".to_string()).await?
+                                    //    }
+                                    //}
+                                    //},
     }
 
     Ok(())
 }
 
-fn get_game_mode(game_mode: &str) -> Result<GameMode, Error> {
+async fn get_game_mode(game_mode: &str) -> Result<GameMode, Error> {
     match game_mode {
-        "customs" => return Ok(GameMode::Customs),
-        "solos" => return Ok(GameMode::Solos),
-        "duos" => return Ok(GameMode::Duos),
-        "trios" => return Ok(GameMode::Trios),
-        _ => return Err("Not a valid game mode".into()),
+        "customs" => Ok(GameMode::Customs),
+        "solos" => Ok(GameMode::Solos),
+        "duos" => Ok(GameMode::Duos),
+        "trios" => Ok(GameMode::Trios),
+        _ => Err("Not a valid game mode".into()),
     }
 }
 
@@ -242,13 +338,15 @@ async fn create_character_set() -> CharacterSet {
     let character: Character = rand::random();
     let skill: Skill = rand::random();
     let ultimate: Ultimate = rand::random();
-    let melee_weapon: MeleeWeapon = rand::random();
+    let main_weapon: MeleeWeapon = rand::random();
+    let sub_weapon: MeleeWeapon = rand::random();
     let range_weapon: RangeWeapon = rand::random();
     CharacterSet {
         character,
         skill,
         ultimate,
-        melee_weapon,
+        main_weapon,
+        sub_weapon,
         range_weapon,
     }
 }
