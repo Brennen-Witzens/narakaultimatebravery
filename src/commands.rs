@@ -73,10 +73,9 @@ pub async fn ultimatebravery(
                 character_two.character = rand::random();
             }
 
-            let format_one = format!("First Character set is - Character: {}, Skill: {}, Ultimate: {}, Main Melee Priority: {}, Sub Melee Priority: {}, Range: {}", character_one.character,
-character_one.skill, character_one.ultimate, character_one.main_weapon, character_one.sub_weapon, character_one.range_weapon);
-            let format_two = format!("Secord Character set is - Character: {}, Skill: {}, Ultimate: {}, Main Melee Priority: {}, Sub Melee Priority: {}, Range: {}", character_two.character,
-character_two.skill, character_two.ultimate, character_two.main_weapon, character_two.sub_weapon, character_two.range_weapon);
+            let format_one = format_character_set(character_one).await;
+            let format_two = format_character_set(character_two).await;
+
             let response = format!("{} \n\n{}", format_one, format_two);
             ctx.say(response).await?;
         }
@@ -93,12 +92,9 @@ character_two.skill, character_two.ultimate, character_two.main_weapon, characte
                 character_two.character = rand::random();
             }
 
-            let format_one = format!("First Character set is - Character: {}, Skill: {}, Ultimate: {}, Main Melee Priority: {}, Sub Melee Priority: {}, Range: {}", character_one.character,
-character_one.skill, character_one.ultimate, character_one.main_weapon, character_one.sub_weapon, character_one.range_weapon);
-            let format_two = format!("Secord Character set is - Character: {}, Skill: {}, Ultimate: {}, Main Melee Priority: {}, Sub Melee Priority: {}, Range: {}", character_two.character,
-character_two.skill, character_two.ultimate, character_two.main_weapon, character_two.sub_weapon, character_two.range_weapon);
-            let format_three = format!("Third Character set is - Character: {}, Skill: {}, Ultimate: {}, Main Melee Priority: {}, Sub Melee Priority: {}, Range: {}", character_three.character,
-character_three.skill, character_three.ultimate, character_three.main_weapon, character_three.sub_weapon, character_three.range_weapon);
+            let format_one = format_character_set(character_one).await;
+            let format_two = format_character_set(character_two).await;
+            let format_three = format_character_set(character_three).await;
 
             let response = format!("{} \n\n{} \n\n{}", format_one, format_two, format_three);
             ctx.say(response).await?;
@@ -133,4 +129,9 @@ async fn create_character_set() -> CharacterSet {
         sub_weapon,
         range_weapon,
     }
+}
+
+async fn format_character_set(character_set: CharacterSet) -> String {
+    format!("The Character set is - Character: {}, Skill: {}, Ultimate: {}, Main Melee Priority: {}, Sub Melee Priority: {}, Range: {}", character_set.character,
+character_set.skill, character_set.ultimate, character_set.main_weapon, character_set.sub_weapon, character_set.range_weapon)
 }
