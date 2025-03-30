@@ -269,7 +269,6 @@ impl Distribution<Ultimate> for StandardUniform {
     }
 }
 
-// TODO: Setup the skill and ultimate as enums as well
 #[derive(Debug)]
 struct CharacterSet {
     character: Character,
@@ -292,7 +291,7 @@ pub async fn ultimatebravery(
 ) -> Result<(), Error> {
     let game_mode = get_game_mode(&mode.to_lowercase()).await?;
     match game_mode {
-        GameMode::Customs => {
+        GameMode::Customs | GameMode::Solos => {
             let response = create_character_set().await;
             let format = format!(
                 "The set is - Character: {}, Skill: {}, Ultimate: {}, Main Melee Priority: {}, Sub Melee Priority: {}, Range: {}",
@@ -305,20 +304,44 @@ pub async fn ultimatebravery(
             );
             ctx.say(format).await?;
         }
-        GameMode::Solos => todo!(),
-        GameMode::Duos => todo!(),
-        GameMode::Trios => todo!(), //{
-                                    //match serious {
-                                    //    Some(_) => {
-                                    //        // Do serious comp randomization here
-                                    //        ctx.say("Sand Siphon".to_string()).await?
-                                    //    }
-                                    //    None => {
-                                    //        // Do ultimate bravery randomization here
-                                    //        ctx.say("Some crazy comp".to_string()).await?
-                                    //    }
-                                    //}
-                                    //},
+        GameMode::Duos => {
+            let character_one = create_character_set().await;
+            let mut character_two = create_character_set().await;
+
+            if character_one.character.to_string() == character_two.character.to_string() {
+                character_two.character = rand::random();
+            }
+
+            let format_one = format!("First Character set is - Character: {}, Skill: {}, Ultimate: {}, Main Melee Priority: {}, Sub Melee Priority: {}, Range: {}", character_one.character,
+character_one.skill, character_one.ultimate, character_one.main_weapon, character_one.sub_weapon, character_one.range_weapon);
+            let format_two = format!("Secord Character set is - Character: {}, Skill: {}, Ultimate: {}, Main Melee Priority: {}, Sub Melee Priority: {}, Range: {}", character_two.character,
+character_two.skill, character_two.ultimate, character_two.main_weapon, character_two.sub_weapon, character_two.range_weapon);
+            let response = format!("{} \n {}", format_one, format_two);
+            ctx.say(response).await?;
+        }
+        GameMode::Trios => {
+            let mut character_one = create_character_set().await;
+            let mut character_two = create_character_set().await;
+            let mut character_three = create_character_set().await;
+
+            if character_one.character.to_string() == character_two.character.to_string() {
+                character_one.character = rand::random();
+            } else if character_one.character.to_string() == character_three.character.to_string() {
+                character_three.character = rand::random();
+            } else if character_two.character.to_string() == character_three.character.to_string() {
+                character_two.character = rand::random();
+            }
+
+            let format_one = format!("First Character set is - Character: {}, Skill: {}, Ultimate: {}, Main Melee Priority: {}, Sub Melee Priority: {}, Range: {}", character_one.character,
+character_one.skill, character_one.ultimate, character_one.main_weapon, character_one.sub_weapon, character_one.range_weapon);
+            let format_two = format!("Secord Character set is - Character: {}, Skill: {}, Ultimate: {}, Main Melee Priority: {}, Sub Melee Priority: {}, Range: {}", character_two.character,
+character_two.skill, character_two.ultimate, character_two.main_weapon, character_two.sub_weapon, character_two.range_weapon);
+            let format_three = format!("Third Character set is - Character: {}, Skill: {}, Ultimate: {}, Main Melee Priority: {}, Sub Melee Priority: {}, Range: {}", character_three.character,
+character_three.skill, character_three.ultimate, character_three.main_weapon, character_three.sub_weapon, character_three.range_weapon);
+
+            let response = format!("{} \n {} \n {}", format_one, format_two, format_three);
+            ctx.say(response).await?;
+        }
     }
 
     Ok(())
