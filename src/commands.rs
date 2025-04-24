@@ -1,6 +1,8 @@
+use poise::serenity_prelude;
+
 use crate::{
     util::{Character, MeleeWeapon, RangeWeapon, Skill, Ultimate},
-    Context, Error,
+    Context, Error, GameSettings, MapRotation,
 };
 
 /// Show this help menu
@@ -40,6 +42,88 @@ struct CharacterSet {
     range_weapon: RangeWeapon,
 }
 
+// Tourney Commands
+// TODO:
+// 1. Start Register - Discord ID, Naraka UUID/Name, Optional Character?
+// 2. (Get) Return Results
+
+// Register for Tourney command
+// !register -- (user)author - discord id, Naraka UUID, list characters -> unqiue characters
+// - Backend/Server needs to have some value for number of games
+// - Make a Register Tourney command -> Sindbads, Myself, Erq -> or Discord Guild Admin registers a
+// toruney. With games required, and other info.
+// - Determine number of games and Map rotation + weather
+
+// TODO:
+// Create tournament
+// - Can't do multiple choice in single command. Need to track edits to properly set up "game"
+// - Not sure if re-run on edit or re-run after done is a thing for slash commands
+// - Add descriotions to everything
+// - Struct for return
+// - Hashmap -> 'Tourney Id' (internal thing) + Settings struct (Map + Game)
+#[poise::command(slash_command)]
+pub async fn create_tournament(
+    ctx: Context<'_>,
+    map: MapRotation,
+    #[min = 1]
+    #[max = 6]
+    game_number: i8,
+    is_final_game: bool,
+) -> Result<(), Error> {
+    if is_final_game {
+        // Add final map and game to set
+        // Lock set/value for game
+        // Return with full overall struct
+        // Create New GameSetting object
+        let game_setting = GameSettings::new(map, game_number);
+
+        // TODO: Need to get a uuid for touranment value - dont hard code
+        let _ = {
+            let mut game_settings = ctx.data().game_settings.lock().unwrap();
+            let mut tournament = ctx.data().registered_tournament.lock().unwrap();
+            game_settings.push(game_setting);
+            tournament.insert(0, game_settings.to_vec());
+        };
+
+        let mut response = String::new();
+        let _ = {
+            let settings = ctx.data().registered_tournament.lock().unwrap();
+
+            if let Some(settings) = settings.get(&0) {
+                for val in settings.iter() {
+                    response += &format!("{:?}\n", val);
+                }
+            } else {
+                response += &format!("There is no tournament with that id");
+            }
+        };
+        ctx.say(response).await?;
+        Ok(())
+    } else {
+        // Create New GameSetting object
+        let game_setting = GameSettings::new(map, game_number);
+
+        let _ = {
+            let mut game_settings = ctx.data().game_settings.lock().unwrap();
+            let mut tournament = ctx.data().registered_tournament.lock().unwrap();
+            game_settings.push(game_setting);
+            tournament.insert(0, game_settings.to_vec());
+        };
+
+        let response = format!("Successfully added to the tournament. Please run the command again to add more values for the tournament.");
+        // return response saying success, and to run command again
+        ctx.say(response).await?;
+        Ok(())
+    }
+}
+
+// TODO:
+// - Check permissions/add permissions
+#[poise::command(prefix_command, slash_command)]
+pub async fn register(ctx: Context<'_>, user: serenity_prelude::User) -> Result<(), Error> {
+    Ok(())
+}
+
 /// Ultimate Bravery for Naraka
 /// /ultimatebravery
 #[poise::command(slash_command)]
@@ -69,6 +153,7 @@ pub async fn ultimatebravery(
             let character_one = create_character_set().await;
             let mut character_two = create_character_set().await;
 
+            // TODO: is there a way to do this better
             if character_one.character.to_string() == character_two.character.to_string() {
                 character_two.character = rand::random();
             }
@@ -84,6 +169,7 @@ pub async fn ultimatebravery(
             let mut character_two = create_character_set().await;
             let mut character_three = create_character_set().await;
 
+            // TODO: is there a way to do this better
             if character_one.character.to_string() == character_two.character.to_string() {
                 character_one.character = rand::random();
             } else if character_one.character.to_string() == character_three.character.to_string() {
