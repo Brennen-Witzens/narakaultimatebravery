@@ -15,6 +15,7 @@ type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
 // TODO: Change to UUIDs
+#[derive(Debug)]
 pub struct RegisteredPlayers {
     discord_id: String,
     naraka_id: String,
@@ -78,6 +79,7 @@ async fn main() {
                 commands::help(),
                 commands::ultimatebravery(),
                 commands::create_tournament(),
+                commands::register_for_tournament(),
             ],
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some("!".into()),

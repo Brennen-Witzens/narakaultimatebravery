@@ -1,10 +1,11 @@
 use core::fmt;
+use poise::ChoiceParameter;
 use rand::{
     distr::{Distribution, StandardUniform},
     Rng,
 };
 
-#[derive(Debug)]
+#[derive(Debug, ChoiceParameter)]
 pub enum Character {
     Unspecified,
     Viper,

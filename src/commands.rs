@@ -2,7 +2,7 @@ use poise::serenity_prelude;
 
 use crate::{
     util::{Character, MeleeWeapon, RangeWeapon, Skill, Ultimate},
-    Context, Error, GameSettings, MapRotation,
+    Context, Error, GameSettings, MapRotation, RegisteredPlayers,
 };
 
 /// Show this help menu
@@ -61,6 +61,7 @@ struct CharacterSet {
 // - Add descriotions to everything
 // - Struct for return
 // - Hashmap -> 'Tourney Id' (internal thing) + Settings struct (Map + Game)
+// - Return a Tournament id for the user(s) to enter
 #[poise::command(slash_command)]
 pub async fn create_tournament(
     ctx: Context<'_>,
@@ -77,7 +78,9 @@ pub async fn create_tournament(
         // Create New GameSetting object
         let game_setting = GameSettings::new(map, game_number);
 
-        // TODO: Need to get a uuid for touranment value - dont hard code
+        // TODO:
+        // - Need to get a uuid for touranment value - dont hard code
+        // - Possible integration into database for 'easier' retrevial
         let _ = {
             let mut game_settings = ctx.data().game_settings.lock().unwrap();
             let mut tournament = ctx.data().registered_tournament.lock().unwrap();
@@ -110,8 +113,9 @@ pub async fn create_tournament(
             tournament.insert(0, game_settings.to_vec());
         };
 
-        let response = format!("Successfully added to the tournament. Please run the command again to add more values for the tournament.");
+        // TODO: Add tournament id to 'easily' get back the correct tournament
         // return response saying success, and to run command again
+        let response = format!("Successfully added to the tournament. Please run the command again to add more values for the tournament.");
         ctx.say(response).await?;
         Ok(())
     }
@@ -119,15 +123,82 @@ pub async fn create_tournament(
 
 // TODO:
 // - Check permissions/add permissions
+// - naraka_id should be a uuid (number)
+// - The other way to do characters is several optional values would allow for easier ways to get
+// characters, and people would just need to know how many games there are and the order.
+// - Have a tournament id to make things "easier" to link up -> could also have it be part of the
+// selection choices. Have it be an internal value that's gotten but shown as a content value
+// (though not sure if that's possible)
+// !register_for_tournament or /register_for_tournament
 #[poise::command(prefix_command, slash_command)]
-pub async fn register(ctx: Context<'_>, user: serenity_prelude::User) -> Result<(), Error> {
+pub async fn register_for_tournament(
+    ctx: Context<'_>,
+    user: serenity_prelude::User,
+    naraka_id: String,
+    character_one: Option<Character>,
+    character_two: Option<Character>,
+    character_three: Option<Character>,
+    character_four: Option<Character>,
+    character_five: Option<Character>,
+    character_six: Option<Character>,
+) -> Result<(), Error> {
+    let mut response = String::new();
+    let mut character_vec = Vec::<Character>::new();
+
+    // Don't really like these if let somes here for the character(s)... >_<
+    if let Some(one) = character_one {
+        character_vec.push(one);
+    };
+
+    if let Some(two) = character_two {
+        character_vec.push(two);
+    };
+
+    if let Some(three) = character_three {
+        character_vec.push(three);
+    };
+    if let Some(four) = character_four {
+        character_vec.push(four);
+    };
+    if let Some(five) = character_five {
+        character_vec.push(five);
+    };
+    if let Some(six) = character_six {
+        character_vec.push(six);
+    };
+
+    let _ = {
+        let mut players = ctx.data().registered_players.lock().unwrap();
+        let registered_players =
+            RegisteredPlayers::new(user.id.to_string(), naraka_id, character_vec);
+        players.push(registered_players);
+
+        for player in players.iter() {
+            response += &format!("Playing in the tournament: {player:?}\n");
+        }
+    };
+
+    // TODO: Add a way to save info to a database
+    ctx.send(
+        poise::CreateReply::default()
+            .content(response)
+            .ephemeral(true),
+    )
+    .await?;
+    Ok(())
+}
+
+// Only for tournament organizers
+// Admin or whatever role
+#[poise::command(prefix_command)]
+pub async fn get_registered_players(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
 /// Ultimate Bravery for Naraka
 /// /ultimatebravery
 #[poise::command(slash_command)]
-pub async fn ultimatebravery(
+pub async fn ultimate_bravery(
     ctx: Context<'_>,
     #[description = "Which mode to choose from"]
     #[choices("Customs", "Solos", "Duos", "Trios")]
