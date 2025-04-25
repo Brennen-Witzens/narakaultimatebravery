@@ -77,7 +77,7 @@ async fn main() {
             commands: vec![
                 register(),
                 commands::help(),
-                commands::ultimatebravery(),
+                commands::ultimate_bravery(),
                 commands::create_tournament(),
                 commands::register_for_tournament(),
             ],

@@ -43,25 +43,11 @@ struct CharacterSet {
 }
 
 // Tourney Commands
-// TODO:
-// 1. Start Register - Discord ID, Naraka UUID/Name, Optional Character?
-// 2. (Get) Return Results
-
-// Register for Tourney command
-// !register -- (user)author - discord id, Naraka UUID, list characters -> unqiue characters
-// - Backend/Server needs to have some value for number of games
-// - Make a Register Tourney command -> Sindbads, Myself, Erq -> or Discord Guild Admin registers a
-// toruney. With games required, and other info.
-// - Determine number of games and Map rotation + weather
 
 // TODO:
-// Create tournament
-// - Can't do multiple choice in single command. Need to track edits to properly set up "game"
-// - Not sure if re-run on edit or re-run after done is a thing for slash commands
-// - Add descriotions to everything
-// - Struct for return
-// - Hashmap -> 'Tourney Id' (internal thing) + Settings struct (Map + Game)
-// - Return a Tournament id for the user(s) to enter
+// - Better saving of data
+// - Add tournament id for more consistent 'retrevial' of data (can be internal and just return
+// value)
 #[poise::command(slash_command)]
 pub async fn create_tournament(
     ctx: Context<'_>,
@@ -71,11 +57,9 @@ pub async fn create_tournament(
     game_number: i8,
     is_final_game: bool,
 ) -> Result<(), Error> {
+    let mut response = String::new();
     if is_final_game {
-        // Add final map and game to set
-        // Lock set/value for game
-        // Return with full overall struct
-        // Create New GameSetting object
+        // Create game setting object
         let game_setting = GameSettings::new(map, game_number);
 
         // TODO:
@@ -88,7 +72,6 @@ pub async fn create_tournament(
             tournament.insert(0, game_settings.to_vec());
         };
 
-        let mut response = String::new();
         let _ = {
             let settings = ctx.data().registered_tournament.lock().unwrap();
 
@@ -97,7 +80,7 @@ pub async fn create_tournament(
                     response += &format!("{:?}\n", val);
                 }
             } else {
-                response += &format!("There is no tournament with that id");
+                response = format!("There is no tournament with that id");
             }
         };
         ctx.say(response).await?;
@@ -122,7 +105,6 @@ pub async fn create_tournament(
 }
 
 // TODO:
-// - Check permissions/add permissions
 // - naraka_id should be a uuid (number)
 // - The other way to do characters is several optional values would allow for easier ways to get
 // characters, and people would just need to know how many games there are and the order.
