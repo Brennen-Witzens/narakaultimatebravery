@@ -77,7 +77,7 @@ pub async fn create_tournament(
 
             if let Some(settings) = settings.get(&0) {
                 for val in settings.iter() {
-                    response += &format!("{:?}\n", val);
+                    response += &format!("{}\n", val);
                 }
             } else {
                 response = format!("There is no tournament with that id");
@@ -156,7 +156,7 @@ pub async fn register_for_tournament(
         players.push(registered_players);
 
         for player in players.iter() {
-            response += &format!("Playing in the tournament: {player:?}\n");
+            response += &format!("You have successfully registered for the tournament. \n{player}");
         }
     };
 

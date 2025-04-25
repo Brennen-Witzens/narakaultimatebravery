@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env, sync::Mutex};
+use std::{collections::HashMap, env, fmt, sync::Mutex};
 
 mod commands;
 mod util;
@@ -22,6 +22,8 @@ pub struct RegisteredPlayers {
     characters_to_play: Vec<Character>,
 }
 
+// NOTE:
+// - Should characters_to_play be a reference?
 impl RegisteredPlayers {
     pub fn new(discord_id: String, naraka_id: String, characters_to_play: Vec<Character>) -> Self {
         Self {
@@ -29,6 +31,21 @@ impl RegisteredPlayers {
             naraka_id,
             characters_to_play,
         }
+    }
+}
+
+impl fmt::Display for RegisteredPlayers {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Discord Id: {} \nNaraka Id: {} \n",
+            self.discord_id, self.naraka_id
+        );
+        for (i, character) in self.characters_to_play.iter().enumerate() {
+            write!(f, "Character to play: {} in game {}\n", character, i + 1);
+        }
+
+        Ok(())
     }
 }
 
@@ -49,11 +66,31 @@ impl GameSettings {
     }
 }
 
+impl fmt::Display for GameSettings {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Map is: {} Game number is {}",
+            self.map_setting, self.game_number
+        )
+    }
+}
+
 #[derive(ChoiceParameter, Debug, Clone)]
 enum MapRotation {
     MorusIsleDay,
     MorusIsleNight,
     MorusIsleDusk,
+}
+
+impl fmt::Display for MapRotation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            MapRotation::MorusIsleDay => write!(f, "Morus Isle Day"),
+            MapRotation::MorusIsleNight => write!(f, "Morus Isle Night"),
+            MapRotation::MorusIsleDusk => write!(f, "Morus Isle Dusk"),
+        }
+    }
 }
 
 #[poise::command(prefix_command)]
